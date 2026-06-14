@@ -25,6 +25,7 @@ local services = ReplicatedStorage.Services;
 local ToolService = require(services.ToolService.ToolService);
 
 local ToolType = require("./ToolType");
+local ToolAbstractFactory = require("./ToolAbstractFactory");
 local ToolBuilder = require("./ToolBuilder");
 local Tool = require("./Tool");
 
@@ -34,6 +35,7 @@ local Tool = require("./Tool");
 
 local ToolFactory = {};
 ToolFactory.__index = ToolFactory;
+setmetatable(ToolFactory, ToolAbstractFactory);
 
 -------------------------------------
 -- Constructors
@@ -44,8 +46,7 @@ ToolFactory.__index = ToolFactory;
     @return A new instance of ToolFactory
 ]]
 function ToolFactory.new(): ToolFactory
-    local self = setmetatable({}, ToolFactory) :: ToolFactory;
-    return self;
+    return setmetatable({}, ToolFactory) :: ToolFactory;
 end
 
 -------------------------------------

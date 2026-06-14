@@ -153,6 +153,7 @@ end
     Builds the tool with the given parameters
     @return A new tool with the set parameters
     @error Cannot create a tool with no model!
+    @error Cannot create a tool without its type!
 ]]
 function ToolBuilder.Build(self: ToolBuilder): Tool.Tool
     assert(self._model ~= nil, "Cannot create a tool with no model!");

@@ -210,7 +210,7 @@ end
 ---@inline
 function ProximityPromptService._IsThereAnythingBetweenPlayerAndProximityPrompt(self: ProximityPromptService, proximityPrompt: ProximityPrompt.ProximityPrompt): boolean
 	RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Exclude;
-	RAYCAST_PARAMS.FilterDescendantsInstances = { character, proximityPrompt:GetInstance() :: Instance };
+	RAYCAST_PARAMS.FilterDescendantsInstances = {character, proximityPrompt:GetInstance() :: Instance, workspace:FindFirstChild("ToolsFolder")};
 
 	local distance = (character:GetPivot().Position - proximityPrompt:GetPosition()).Magnitude;
 	local raycastResult = workspace:Raycast(

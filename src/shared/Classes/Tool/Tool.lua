@@ -53,8 +53,7 @@ local equipedTool: Tool? = nil;
 	@return A new Tool instance
 ]]
 function Tool.new(
-	name: string, imageId: number, mass: number, model: Model | BasePart,
-	toolType: ToolType.ToolTypeValues,
+	name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues,
 	equipMethod: (() -> ())?, unequipMethod: (() -> ())?
 ): Tool
 	assert(RunService:IsClient(), "This class can only be instantianted from client-side!");

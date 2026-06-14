@@ -16,6 +16,7 @@
 -------------------------------------
 
 local Weapon = require("../Weapon");
+local ToolType = require("../../ToolType");
 
 -------------------------------------
 -- Variables
@@ -31,10 +32,24 @@ setmetatable(RangedWeapon, {__index = Weapon});
 
 --[[
     Creates a new instance of RangedWeapon
+    @param name Tool's name
+	@param imageId Tool's image's id
+	@param mass number The mass/weight of the tool (absolute value used)
+	@param model Tool's model
+	@param toolType Tool type
+	@param equipMethod Optional function that runs when tool is equipped
+	@param unequipMethod Optional function that runs when tool is unequipped
+    @param damage Damage that a player will receive after being attacked by this weapon
     @return A new instance of RangedWeapon
 ]]
-function RangedWeapon.new(): RangedWeapon
-    local self = setmetatable({}, RangedWeapon) :: RangedWeapon;
+function RangedWeapon.new(
+    name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues,
+	equipMethod: (() -> ())?, unequipMethod: (() -> ())?,
+    damage: number
+): RangedWeapon
+    local self = Weapon.new(name, imageId, mass, model, toolType, equipMethod, unequipMethod, damage) :: RangedWeapon;
+    setmetatable(self, RangedWeapon)
+
     return self;
 end
 
@@ -46,7 +61,7 @@ end
 -- Types
 -------------------------------------
 
-export type RangedWeapon = typeof(setmetatable(
+export type RangedWeapon = Weapon.Weapon & typeof(setmetatable(
     {} :: {},
     RangedWeapon
 ));

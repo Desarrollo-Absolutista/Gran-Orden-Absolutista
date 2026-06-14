@@ -16,6 +16,7 @@
 -------------------------------------
 
 local Weapon = require("../Weapon");
+local ToolType = require("../../ToolType");
 
 -------------------------------------
 -- Variables
@@ -31,10 +32,24 @@ setmetatable(ThrowableWeapon, {__index = Weapon});
 
 --[[
     Creates a new instance of ThrowableWeapon
+    @param name Tool's name
+	@param imageId Tool's image's id
+	@param mass number The mass/weight of the tool (absolute value used)
+	@param model Tool's model
+	@param toolType Tool type
+	@param equipMethod Optional function that runs when tool is equipped
+	@param unequipMethod Optional function that runs when tool is unequipped
+    @param damage Damage that a player will receive after being attacked by this weapon
     @return A new instance of ThrowableWeapon
 ]]
-function ThrowableWeapon.new(): ThrowableWeapon
-    local self = setmetatable({}, ThrowableWeapon) :: ThrowableWeapon;
+function ThrowableWeapon.new(
+    name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues,
+	equipMethod: (() -> ())?, unequipMethod: (() -> ())?,
+    damage: number
+): ThrowableWeapon
+    local self = Weapon.new(name, imageId, mass, model, toolType, equipMethod, unequipMethod, damage) :: ThrowableWeapon;
+    setmetatable(self, ThrowableWeapon)
+
     return self;
 end
 
@@ -46,7 +61,7 @@ end
 -- Types
 -------------------------------------
 
-export type ThrowableWeapon = typeof(setmetatable(
+export type ThrowableWeapon = Weapon.Weapon & typeof(setmetatable(
     {} :: {},
     ThrowableWeapon
 ));
