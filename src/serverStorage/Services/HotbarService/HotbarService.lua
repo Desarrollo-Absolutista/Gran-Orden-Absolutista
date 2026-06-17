@@ -52,6 +52,12 @@ function HotbarService.init(self: HotbarService): ()
     end)
 end
 
+--[[
+    Sets the given tool to the client's hotbar
+    @param client Client to contain the hotbar
+    @param name Tool's name
+    @param toolType Tool's type
+]]
 function HotbarService.SetToolToHotbar(self: HotbarService, client: Player, name: string, toolType: ToolType.ToolTypeValues): ()
     HotbarPacket.packets.SetToolToHotbar.sendTo(
         {
