@@ -55,7 +55,7 @@ function RangedWeaponBuilder.Build(self: RangedWeaponBuilder): RangedWeapon.Rang
     assert(self._model ~= nil, "Cannot create a weapon with no model!");
     assert(self._type ~= nil, "Cannot create a weapon without its type!");
 
-    return RangedWeapon.new(self._name, self._imageId, self._mass, self._model, self._type, self._equipMethod, self._unequipMethod, self._damage);
+    return RangedWeapon.new(self._name, self._imageId, self._mass, self._model, self._type, self._actionCooldown, self._equipMethod, self._unequipMethod, self._damage);
 end
 
 -------------------------------------

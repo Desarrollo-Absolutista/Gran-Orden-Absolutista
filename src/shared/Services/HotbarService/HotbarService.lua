@@ -465,6 +465,30 @@ function HotbarService._ConnectEventToSetATool(self: HotbarService): ()
 end
 
 --[[
+    Checks if the given tool is within a hotbar
+    @param toolType Type of the tool to look for
+    @param toolName Name of the tool to look for
+    @return True if the tool is within a hotbar, false otherwise
+]]
+function HotbarService.HasToolInHotbar(self: HotbarService, toolType: ToolType.ToolTypeValues, toolName: string): boolean
+    local found = false;
+    local toolTypeArray = hotbarTools[toolType];
+    
+    if toolTypeArray ~= nil then
+        for _, tool: Tool.Tool in toolTypeArray :: {any} do
+            if tool:GetName() ~= toolName then
+                continue;
+            end
+    
+            found = true;
+            break;
+        end
+    end
+
+    return found;
+end
+
+--[[
     Sets the ready clients list
     @return Whether the service is initialized
 ]]

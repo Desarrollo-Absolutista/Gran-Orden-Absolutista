@@ -10,5 +10,6 @@ require(ReplicatedStorage.Services.ProximityPromptService.ProximityPromptService
 require(ReplicatedStorage.Services.ChatService.ChatService):init();
 require(ReplicatedStorage.Services.HotbarService.HotbarService):init();
 require(ReplicatedStorage.Services.ToolService.ToolService):init();
+require(ReplicatedStorage.Services.PlayerService.PlayerService):init();
 
 print("Services initializated");

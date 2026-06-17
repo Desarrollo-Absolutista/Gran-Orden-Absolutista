@@ -36,6 +36,22 @@ ObjectPooling.__index = ObjectPooling;
 
 --[[
     Creates a new instance of ObjectPooling
+
+    ```lua
+    local ObjectPooling = require("./ObjectPooling");
+
+    local onPool = function(object)
+        object.Parent = workspace;
+    end)
+
+    local onUnpool = function(object, parent)
+        object.Parent = parent;
+    end
+
+    local myPool = ObjectPooling.new(script.Instance, 10, "PoolTest", onPool, onUnpool);
+    ```
+    ---
+    
     @param instance Instance to be pooling and unpooling
     @param defaultPoolAmount The default amount of instances ready to be pool
     @param onPoolMethod Method to run when a new instance was pooled. Receives the proper instance as argument
@@ -43,12 +59,15 @@ ObjectPooling.__index = ObjectPooling;
     @param lifetime Pooled instance's lifetime before they get unpooled automatically, Set it to nil if the instance is not desired to be automatically unpooled
     @return A new instance of ObjectPooling
 ]]
-function ObjectPooling.new<T>(instance: T, defaultPoolAmount: number, onPoolMethod: ((T) -> ())?, onUnpoolMethod: ((T, Instance) -> ())?, lifetime: number?): ObjectPooling<T>
+function ObjectPooling.new<T>(instance: T, defaultPoolAmount: number, name: string, onPoolMethod: ((T) -> ())?, onUnpoolMethod: ((T, Instance) -> ())?, lifetime: number?): ObjectPooling<T>
     local self = setmetatable({}, ObjectPooling) :: ObjectPooling<T>;
 
     self._trove = Trove.new();
 
+    self._name = name;
+
     self._unpooledInstanceParent = Instance.new("Folder", script);
+    self._unpooledInstanceParent.Name = self._name;
 
     self._instancesToPool = {};
     self._instancesToUnpool = {};
@@ -182,6 +201,22 @@ function ObjectPooling.UnpoolInstance<T>(self: ObjectPooling<T>, instance: T): (
 end
 
 --[[
+    Obtains the object pooling's name
+    @return Object pooling's name
+]]
+function ObjectPooling.GetName<T>(self: ObjectPooling<T>): string
+    return self._unpooledInstanceParent.Name;
+end
+
+--[[
+    Sets a new name to the object pooling
+    @param name The object pooling's new name
+]]
+function ObjectPooling.SetName<T>(self: ObjectPooling<T>, name: string): ()
+    self._unpooledInstanceParent.Name = name
+end
+
+--[[
     Destroyes the ObjectPooling instance
 ]]
 function ObjectPooling.Destroy<T>(self: ObjectPooling<T>): ()
@@ -196,6 +231,8 @@ export type ObjectPooling<T> = typeof(setmetatable(
     {} :: {
         _trove: Trove.Trove,
 
+        _name: string,
+        
         _unpooledInstanceParent: Folder,
 
         _instancesToPool: {T},

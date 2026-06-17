@@ -19,10 +19,15 @@ local RunService = game:GetService("RunService");
 local GuiService = game:GetService("GuiService");
 local VRService = game:GetService("VRService");
 local Players = game:GetService("Players");
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -------------------------------------
 -- Dependencies
 -------------------------------------
+
+local packets = ReplicatedStorage.Packets;
+
+local PlayerPacket = require(packets.Player.PlayerPacket);
 
 local DeviceType = require("./DeviceType");
 
@@ -47,6 +52,15 @@ function PlayerService.init(self: PlayerService): ()
 	end
 	
 	isServiceInitialized = true;
+
+	self:_SendCLientReadyToServer();
+end
+
+--[[
+	Sends a signal to the server showing the local client is ready
+]]
+function PlayerService._SendCLientReadyToServer(self: PlayerService): ()
+	PlayerPacket.packets.SetClientReady.send();
 end
 
 --[[

@@ -12,7 +12,7 @@
 -------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage");
-local RunService = game:GetService("RunService")
+local RunService = game:GetService("RunService");
 
 -------------------------------------
 -- Dependencies
@@ -48,14 +48,12 @@ local equipedTool: Tool? = nil;
 	@param mass number The mass/weight of the tool (absolute value used)
 	@param model Tool's model
 	@param toolType Tool type
+    @param actionCooldown Cooldown for clicking action
 	@param equipMethod Optional function that runs when tool is equipped
 	@param unequipMethod Optional function that runs when tool is unequipped
 	@return A new Tool instance
 ]]
-function Tool.new(
-	name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues,
-	equipMethod: (() -> ())?, unequipMethod: (() -> ())?
-): Tool
+function Tool.new(name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues, actionCooldown: number, equipMethod: (() -> ())?, unequipMethod: (() -> ())?): Tool
 	assert(RunService:IsClient(), "This class can only be instantianted from client-side!");
 
 	local self = setmetatable({}, Tool) :: Tool;
@@ -73,6 +71,9 @@ function Tool.new(
 	self._unequipMethod = unequipMethod;
 
 	self._isEquiped = false;
+
+	self._actionCooldown = actionCooldown;
+	self._canDoCooldownAction = true;
 
 	self.Equiped = self._trove:Add(Signal.new());
 	self.Unequiped = self._trove:Add(Signal.new());
@@ -163,6 +164,14 @@ function Tool.GetType(self: Tool): ToolType.ToolTypeValues
 	return self._type;
 end
 
+--[[
+	Gets the tool equiped
+	@return The tool equiped. Nil if the player has no tools equiped
+]]
+function Tool.GetToolEquiped(): Tool?
+	return equipedTool;
+end
+
 -------------------------------------
 -- Types
 -------------------------------------
@@ -182,6 +191,9 @@ export type Tool = typeof(setmetatable(
 		_unequipMethod: (() -> ())?,
 
 		_isEquiped: boolean,
+
+		_actionCooldown: number,
+		_canDoCooldownAction: boolean,
 
 		Equiped: Signal.Signal,
 		Unequiped: Signal.Signal,

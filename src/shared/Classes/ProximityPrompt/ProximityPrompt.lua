@@ -52,9 +52,25 @@ local proximityPromptFrame = proximityPromptUi:WaitForChild("ProximityPromptFram
 
 local textBoundsParams: GetTextBoundsParams = Instance.new("GetTextBoundsParams");
 
-local objectPooling = ObjectPooling.new(keyPromptTemplate, #Configuration.keys, nil, function(keyFrame: ProximityPromptTypes.KeyPromptUi, parent: Instance)
-	keyFrame.Parent = parent;
-end);
+local onPoolMethod = function(newKeyPrompt: ProximityPromptTypes.KeyPromptUi)
+	textBoundsParams.Text = newKeyPrompt.TextLabel.Text;
+	textBoundsParams.Size = newKeyPrompt.TextLabel.TextSize;
+	textBoundsParams.Font = newKeyPrompt.TextLabel.FontFace;
+	textBoundsParams.Width = math.huge;
+	
+	local textBounds = TextService:GetTextBoundsAsync(textBoundsParams);
+
+	newKeyPrompt.TextLabel.Size = UDim2.fromOffset(textBounds.X, textBounds.Y);
+	newKeyPrompt.Size = UDim2.fromOffset(textBounds.X + textBoundsParams.Size + 10, textBounds.Y);
+
+	newKeyPrompt.Parent = proximityPromptFrame;
+end
+
+local onUnpoolMethod = function(newKeyPrompt: ProximityPromptTypes.KeyPromptUi, parent: Instance)
+	newKeyPrompt.Parent = parent;
+end
+
+local objectPooling = ObjectPooling.new(keyPromptTemplate, #Configuration.keys, "ProximityPrompt", onPoolMethod, onUnpoolMethod);
 
 -------------------------------------
 -- Constructors
@@ -70,10 +86,7 @@ end);
     @param keysData The keybind data for the ProximityPrompt
     @return A new instance of ProximityPrompt
 ]]
-function ProximityPrompt.new(
-	instance: Instance?, position: Vector3, maxDistance: number,
-	onFocusMethod: ProximityPromptTypes.EventMethod?, onUnfocusMethod: ProximityPromptTypes.EventMethod?, keysData: {ProximityPromptTypes.KeybindData}
-): ProximityPrompt
+function ProximityPrompt.new(instance: Instance?, position: Vector3, maxDistance: number, onFocusMethod: ProximityPromptTypes.EventMethod?, onUnfocusMethod: ProximityPromptTypes.EventMethod?, keysData: {ProximityPromptTypes.KeybindData}): ProximityPrompt
 	local self = setmetatable({}, ProximityPrompt) :: ProximityPrompt;
 
 	self._trove = Trove.new();
@@ -175,19 +188,8 @@ function ProximityPrompt._ShowUi(self: ProximityPrompt)
     for _, keyData in self._keys do
         local newKeyPrompt = objectPooling:Pool();
 
-        newKeyPrompt.Key.Text = keyData.keys[1].Name;
-        newKeyPrompt.TextLabel.Text = keyData.methodMessage or "";
-
-        textBoundsParams.Text = newKeyPrompt.TextLabel.Text;
-        textBoundsParams.Size = newKeyPrompt.TextLabel.TextSize;
-        textBoundsParams.Font = newKeyPrompt.TextLabel.FontFace;
-        textBoundsParams.Width = math.huge;
-        local textBounds = TextService:GetTextBoundsAsync(textBoundsParams);
-
-        newKeyPrompt.TextLabel.Size = UDim2.fromOffset(textBounds.X, textBounds.Y);
-        newKeyPrompt.Size = UDim2.fromOffset(textBounds.X + textBoundsParams.Size + 10, textBounds.Y);
-
-        newKeyPrompt.Parent = proximityPromptFrame;
+		newKeyPrompt.Key.Text = keyData.keys[1].Name;
+		newKeyPrompt.TextLabel.Text = keyData.methodMessage or "";
     end
 end
 

@@ -37,17 +37,14 @@ setmetatable(MeleeWeapon, {__index = Weapon});
 	@param mass number The mass/weight of the tool (absolute value used)
 	@param model Tool's model
 	@param toolType Tool type
+    @param actionCooldown Cooldown for clicking action
 	@param equipMethod Optional function that runs when tool is equipped
 	@param unequipMethod Optional function that runs when tool is unequipped
     @param damage Damage that a player will receive after being attacked by this weapon
     @return A new instance of MeleeWeapon
 ]]
-function MeleeWeapon.new(
-    name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues,
-	equipMethod: (() -> ())?, unequipMethod: (() -> ())?,
-    damage: number
-): MeleeWeapon
-    local self = Weapon.new(name, imageId, mass, model, toolType, equipMethod, unequipMethod, damage) :: MeleeWeapon
+function MeleeWeapon.new(name: string, imageId: number, mass: number, model: Model | BasePart, toolType: ToolType.ToolTypeValues, actionCooldown: number, equipMethod: (() -> ())?, unequipMethod: (() -> ())?, damage: number): MeleeWeapon
+    local self = Weapon.new(name, imageId, mass, model, toolType, actionCooldown, equipMethod, unequipMethod, damage) :: MeleeWeapon
     setmetatable(self, MeleeWeapon);
 
     return self;

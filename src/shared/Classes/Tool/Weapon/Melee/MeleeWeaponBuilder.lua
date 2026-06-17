@@ -55,7 +55,7 @@ function MeleeWeaponBuilder.Build(self: MeleeWeaponBuilder): MeleeWeapon.MeleeWe
     assert(self._model ~= nil, "Cannot create a weapon with no model!");
     assert(self._type ~= nil, "Cannot create a weapon without its type!");
 
-    return MeleeWeapon.new(self._name, self._imageId, self._mass, self._model, self._type, self._equipMethod, self._unequipMethod, self._damage);
+    return MeleeWeapon.new(self._name, self._imageId, self._mass, self._model, self._type, self._actionCooldown, self._equipMethod, self._unequipMethod, self._damage);
 end
 
 -------------------------------------

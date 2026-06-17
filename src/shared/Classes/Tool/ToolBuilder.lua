@@ -49,6 +49,8 @@ function ToolBuilder.new(): ToolBuilder
 
     self._type = nil;
 
+    self._actionCooldown = 0;
+
     self._equipMethod = nil;
     self._unequipMethod = nil;
 
@@ -130,6 +132,18 @@ function ToolBuilder.SetType(self: ToolBuilder, toolType: ToolType.ToolTypeValue
 end
 
 --[[
+    Sets the action cooldown
+    @param actionCooldown Cooldown to do the tool's action
+    @error The cooldown cannot be negative!
+]]
+function ToolBuilder.SetActionCooldown(self: ToolBuilder, actionCooldown: number): ToolBuilder
+    assert(actionCooldown >= 0, "The cooldown cannot be negative!");
+
+    self._actionCooldown = actionCooldown;
+    return self;
+end
+
+--[[
     Sets the equip method to the tool
     @param equipMethod Tool's equip method
     @return The current ToolBuilder
@@ -159,7 +173,7 @@ function ToolBuilder.Build(self: ToolBuilder): Tool.Tool
     assert(self._model ~= nil, "Cannot create a tool with no model!");
     assert(self._type ~= nil, "Cannot create a tool without its type!");
 
-    return Tool.new(self._name, self._imageId, self._mass, self._model, self._type, self._equipMethod, self._unequipMethod);
+    return Tool.new(self._name, self._imageId, self._mass, self._model, self._type, self._actionCooldown, self._equipMethod, self._unequipMethod);
 end
 
 -------------------------------------
@@ -172,6 +186,8 @@ export type ToolBuilder = typeof(setmetatable(
 		_imageId: number,
 
 		_mass: number,
+
+        _actionCooldown: number,
 
 		_equipMethod: (() -> ())?,
 		_unequipMethod: (() -> ())?,

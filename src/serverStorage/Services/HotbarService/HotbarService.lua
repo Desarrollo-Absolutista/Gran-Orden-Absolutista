@@ -47,13 +47,8 @@ function HotbarService.init(self: HotbarService): ()
     
     isServiceInitialized = true;
 
-    Players.PlayerAdded:Connect(function(player: Player)
-        task.wait(5);
+    Players.PlayerAdded:Connect(function(player: Player)        
         
-        self:SetToolToHotbar(player, "Radio", ToolType.Tools);
-        self:SetToolToHotbar(player, "Axe", ToolType.Tools);
-        self:SetToolToHotbar(player, "AK", ToolType.Weapons);
-        self:SetToolToHotbar(player, "Boat", ToolType.Consumables);
     end)
 end
 

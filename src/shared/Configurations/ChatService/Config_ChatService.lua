@@ -16,7 +16,7 @@ local Config: Config = {
 
 	bubbleMessageTimelife = 15,
 
-	typeMessageKeys = { Enum.KeyCode.Slash, Enum.KeyCode.KeypadDivide },
+	typeMessageKeys = {Enum.KeyCode.Slash, Enum.KeyCode.KeypadDivide},
 };
 
 -------------------------------------
