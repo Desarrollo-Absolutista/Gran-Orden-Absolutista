@@ -12,6 +12,7 @@
 -------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage");
+local ServerStorage = game:GetService("ServerStorage");
 local Players = game:GetService("Players");
 
 -------------------------------------
@@ -20,10 +21,13 @@ local Players = game:GetService("Players");
 
 local classes = ReplicatedStorage.Classes;
 local packets = ReplicatedStorage.Packets;
+local serverServices = ServerStorage.Services;
 
 local ToolType = require(classes.Tool.ToolType);
 
 local HotbarPacket = require(packets.Hotbar.HotbarPacket);
+
+local PlayerService = require(serverServices.PlayerService.PlayerService);
 
 -------------------------------------
 -- Variables
@@ -48,7 +52,23 @@ function HotbarService.init(self: HotbarService): ()
     isServiceInitialized = true;
 
     Players.PlayerAdded:Connect(function(player: Player)        
-        
+        PlayerService:WaitForClientToLoad(player);
+
+        HotbarPacket.packets.SetToolToHotbar.sendTo(
+            {
+                toolName = "Pikachu",
+                toolType = ToolType.Tools
+            },
+            player
+        );
+
+        HotbarPacket.packets.SetToolToHotbar.sendTo(
+            {
+                toolName = "Pikachu",
+                toolType = ToolType.Tools
+            },
+            player
+        );
     end)
 end
 

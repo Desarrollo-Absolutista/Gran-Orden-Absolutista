@@ -35,7 +35,7 @@ local ToolType = require("./ToolType");
 local Tool = {};
 Tool.__index = Tool;
 
-local equipedTool: Tool? = nil;
+local equippedTool: Tool? = nil;
 
 -------------------------------------
 -- Constructors
@@ -70,13 +70,13 @@ function Tool.new(name: string, imageId: number, mass: number, model: Model | Ba
 	self._equipMethod = equipMethod;
 	self._unequipMethod = unequipMethod;
 
-	self._isEquiped = false;
+	self._isEquipped = false;
 
 	self._actionCooldown = actionCooldown;
 	self._canDoCooldownAction = true;
 
-	self.Equiped = self._trove:Add(Signal.new());
-	self.Unequiped = self._trove:Add(Signal.new());
+	self.equipped = self._trove:Add(Signal.new());
+	self.Unequipped = self._trove:Add(Signal.new());
 
 	self._model = model;
 
@@ -91,10 +91,10 @@ end
 	Equips the tool
 ]]
 function Tool.Equip(self: Tool): ()
-	if equipedTool then
-		equipedTool:Unequip()
+	if equippedTool then
+		equippedTool:Unequip()
 	end
-	equipedTool = self;
+	equippedTool = self;
 
 	ToolsPacket.packets.Equip.send
 	{
@@ -102,8 +102,8 @@ function Tool.Equip(self: Tool): ()
 		toolType = self._type
 	}
 
-	self.Equiped:Fire();
-	self._isEquiped = true;
+	self.equipped:Fire();
+	self._isEquipped = true;
 
 	if self._equipMethod then
 		self._equipMethod();
@@ -114,10 +114,10 @@ end
 	Unequips the tool
 ]]
 function Tool.Unequip(self: Tool): ()
-	self.Unequiped:Fire();
+	self.Unequipped:Fire();
 	
 	ToolsPacket.packets.Unequip.send();
-	self._isEquiped = false;
+	self._isEquipped = false;
 
 	if self._unequipMethod then
 		self._unequipMethod();
@@ -128,8 +128,8 @@ end
 	Checks if the tool is equipped
 	@return True if the tool is equipped, false otherwise
 ]]
-function Tool.IsEquiped(self: Tool): boolean
-	return self._isEquiped;
+function Tool.IsEquipped(self: Tool): boolean
+	return self._isEquipped;
 end
 
 --[[
@@ -165,11 +165,11 @@ function Tool.GetType(self: Tool): ToolType.ToolTypeValues
 end
 
 --[[
-	Gets the tool equiped
-	@return The tool equiped. Nil if the player has no tools equiped
+	Gets the tool equipped
+	@return The tool equipped. Nil if the player has no tools equipped
 ]]
-function Tool.GetToolEquiped(): Tool?
-	return equipedTool;
+function Tool.GetToolequipped(): Tool?
+	return equippedTool;
 end
 
 -------------------------------------
@@ -190,13 +190,13 @@ export type Tool = typeof(setmetatable(
 		_equipMethod: (() -> ())?,
 		_unequipMethod: (() -> ())?,
 
-		_isEquiped: boolean,
+		_isEquipped: boolean,
 
 		_actionCooldown: number,
 		_canDoCooldownAction: boolean,
 
-		Equiped: Signal.Signal,
-		Unequiped: Signal.Signal,
+		equipped: Signal.Signal,
+		Unequipped: Signal.Signal,
 
 		_model: Model | BasePart,
 	},

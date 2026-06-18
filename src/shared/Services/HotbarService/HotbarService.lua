@@ -1,18 +1,25 @@
 --!strict
 --@author Kriko_YT
 --@date 2026/06/09
---@version 1.0
+--@version 1.2
 
 -------------------------------------
 -- Constants
 -------------------------------------
+
+local ROBLOX_IMAGE_STRING = "rbxassetid://%i";
 
 local SLOT_NAME = "Slot#%i";
 
 local COOLDOWN_TO_CHANGE_HOTBAR: number = 0.1;
 local CHANGE_HOTBAR_ACTION_NAME: string = "HotbarScroll";
 
+local SPACE_BETWEEN_HOTBARS: number = 0.5;
 local CHANGE_HOTBAR_TWEEN_INFORMATION: TweenInfo = TweenInfo.new(0.25);
+
+local DISTANCE_TO_MOVE_OFF_TO_START_MOVING_SLOTS = 20;
+local MAXIMUM_DISTANCE_TO_DETECT_SLOTS_WHEN_SWAPING = 100;
+local MOVE_IMAGE_TO_SLOOT_TWEEN_INFORMATION: TweenInfo = TweenInfo.new(0.25);
 
 -------------------------------------
 -- Roblox Services
@@ -33,6 +40,7 @@ local Players = game:GetService("Players");
 local classes = ReplicatedStorage.Classes;
 local packets = ReplicatedStorage.Packets;
 local services = ReplicatedStorage.Services;
+local packages = ReplicatedStorage.Packages;
 local configurations = ReplicatedStorage.Configurations;
 
 local ToolType = require(classes.Tool.ToolType);
@@ -40,6 +48,8 @@ local ToolFactory = require(classes.Tool.ToolFactory);
 local Tool = require(classes.Tool.Tool);
 
 local HotbarPacket = require(packets.Hotbar.HotbarPacket);
+
+local Promise = require(packages.Promise);
 
 local ToolService = require(services.ToolService.ToolService);
 
@@ -59,13 +69,19 @@ local localPlayer = Players.LocalPlayer :: Player;
 local playerGui = localPlayer:WaitForChild("PlayerGui");
 local hotbarUi = playerGui:WaitForChild("Hotbar") :: HotbarServiceTypes.HotbarUi;
 
+local mouse = localPlayer:GetMouse();
+
 local assets = ReplicatedStorage.Assets.HotbarService;
 local slot = assets.Slot :: HotbarServiceTypes.HotbarSlot;
 
 local hotbarSlots: {[ToolType.ToolTypeValues]: {HotbarServiceTypes.HotbarSlot}} = {};
 local hotbarTools: {[ToolType.ToolTypeValues]: {[HotbarServiceTypes.HotbarSlot]: Tool.Tool}} = {};
+local hotbarConnectedEvents: {RBXScriptConnection} = {};
 
 local activeHotbar: ToolType.ToolTypeValues = ToolType.Tools;
+
+local buttonOverall: TextButton;
+local overallButtonEvent: RBXScriptConnection? = nil;
 
 -------------------------------------
 -- Methods
@@ -90,9 +106,29 @@ function HotbarService.init(self: HotbarService): ()
     StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, false);
 
     self:_SetUpUi();
+    self:_SetUpBackgroundUiForSwaping();
     self:_ConnectKeyboardEvent();
     self:_ConnectEventToSetATool();
     self:_ConnectHatbarChangerEvent();
+end
+
+--[[
+    Sets up the background's swaping 
+]]
+function HotbarService._SetUpBackgroundUiForSwaping(self: HotbarService): ()
+    local screen = Instance.new("ScreenGui");
+    screen.Name = "SwapBackground";
+    screen.DisplayOrder = 99999;
+    screen.IgnoreGuiInset = true;
+    screen.Parent = playerGui;
+
+    buttonOverall= Instance.new("TextButton");
+    buttonOverall.Size = UDim2.fromScale(1, 1);
+    buttonOverall.BackgroundTransparency = 0.999;
+    buttonOverall.ZIndex = screen.DisplayOrder;
+    buttonOverall.Text = "";
+    buttonOverall.Visible = false;
+    buttonOverall.Parent = screen;
 end
 
 --[[
@@ -109,19 +145,8 @@ function HotbarService._SetUpUi(self: HotbarService): ()
 
         hotbarSlots[enumValue] = table.create(Config.slotsPerHotbar);
 
-        local parentFrame = Instance.new("Frame");
+        local parentFrame = self:_CreateSlotsParentFrame();
         parentFrame.Name = enumName;
-        parentFrame.BackgroundTransparency = 1;
-        parentFrame.Size = UDim2.fromScale(1, 1);
-        parentFrame.Visible = false;
-        parentFrame.Position = UDim2.fromScale(0, -1);
-        parentFrame.Parent = hotbarUi.Frame;
-
-        local uiListLayout = Instance.new("UIListLayout");
-        uiListLayout.Padding = UDim.new(0.02, 0);
-        uiListLayout.FillDirection = Enum.FillDirection.Horizontal;
-        uiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right;
-        uiListLayout.Parent = parentFrame;
 
         for slotIndex = 1, Config.slotsPerHotbar do
             local newSlot = slot:Clone();
@@ -137,38 +162,43 @@ function HotbarService._SetUpUi(self: HotbarService): ()
 end
 
 --[[
-    Disables every slot in the active hotbar
+    Creates the frame where all the slots from a specific hotbar will be placed
+    @return Parent frame for all these slots
 ]]
----@inline
-function HotbarService._DisableCurrentHotbar(self: HotbarService, direction: HotbarScrollDirection.HotbarScrollDirectionValues): ()
-    local frame = hotbarSlots[activeHotbar][1].Parent :: Frame;
+function HotbarService._CreateSlotsParentFrame(self: HotbarService): Frame
+    local parentFrame = Instance.new("Frame");
+    parentFrame.BackgroundTransparency = 1;
+    parentFrame.Size = UDim2.fromScale(1, 1);
+    parentFrame.Visible = true;
+    parentFrame.Position = UDim2.fromScale(0, -1);
+    parentFrame.Parent = hotbarUi.Frame;
 
-    local tween = TweenService:Create(
-        frame,
-        CHANGE_HOTBAR_TWEEN_INFORMATION,
-        {
-            Position = UDim2.fromScale(0, direction)
-        }
-    );
-    tween:Play();
-    tween.Completed:Connect(function()
-        tween:Destroy();
-        frame.Visible = false;
-    end)
+    local uiListLayout = Instance.new("UIListLayout");
+    uiListLayout.Padding = UDim.new(0.02, 0);
+    uiListLayout.FillDirection = Enum.FillDirection.Horizontal;
+    uiListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right;
+    uiListLayout.Parent = parentFrame;
+
+    return parentFrame;
 end
 
 --[[
-    Equips or unequips the tool equiped in the given slot in the active hotbar
+    Equips or unequips the tool equipped in the given slot in the active hotbar
     @param slot Slot in the active hotbar which contains the tool to equip/unequip
 ]]
 function HotbarService._EquipOrUnequipToolAccordingToSlot(self: HotbarService, slot: HotbarServiceTypes.HotbarSlot): ()
+    local slots = hotbarTools[activeHotbar];
+    if slots == nil then
+        return;
+    end
+
     local tool: Tool.Tool? = hotbarTools[activeHotbar][slot];
 
     if tool == nil then
         return;
     end
 
-    if tool:IsEquiped() then
+    if tool:IsEquipped() then
         tool:Unequip();
     else
         tool:Equip();
@@ -181,7 +211,7 @@ end
 ---@inline
 function HotbarService._EnableCurrentHotbar(self: HotbarService, direction: HotbarScrollDirection.HotbarScrollDirectionValues): ()
     local frame = hotbarSlots[activeHotbar][1].Parent :: Frame;
-    frame.Position = UDim2.fromScale(0, direction);
+    frame.Position = UDim2.fromScale(0, direction + math.sign(direction) * SPACE_BETWEEN_HOTBARS);
     frame.Visible = true;
 
     local tween = TweenService:Create(
@@ -196,10 +226,64 @@ function HotbarService._EnableCurrentHotbar(self: HotbarService, direction: Hotb
         tween:Destroy();
         
         for _, slot: HotbarServiceTypes.HotbarSlot in ipairs(hotbarSlots[activeHotbar]) do
-            slot.Detector.MouseButton1Up:Connect(function()
-                self:_EquipOrUnequipToolAccordingToSlot(slot);
-            end)
+            self:_EnableSlotEvents(slot);
         end
+    end)
+end
+
+--[[
+
+]]
+function HotbarService._EnableSlotEvents(self: HotbarService, slot: HotbarServiceTypes.HotbarSlot): ()
+    local pressingButtonPromise: typeof(Promise.new())? = nil;
+
+    table.insert(hotbarConnectedEvents, slot.Detector.MouseButton1Down:Connect(function()
+        local startingPosition = vector.create(mouse.X, mouse.Y);
+
+        pressingButtonPromise = Promise.new(function(resolve: () -> ())
+            repeat
+                task.wait();
+            until vector.magnitude(startingPosition - vector.create(mouse.X, mouse.Y)) >= DISTANCE_TO_MOVE_OFF_TO_START_MOVING_SLOTS;
+
+            resolve();
+        end)
+        :andThen(function()
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
+            self:_EnableSwapingToolsInHotbar(slot);
+        end)
+    end))
+
+    table.insert(hotbarConnectedEvents, slot.Detector.MouseButton1Up:Connect(function()
+        if pressingButtonPromise then
+            pressingButtonPromise:cancel();
+        end
+
+        self:_EquipOrUnequipToolAccordingToSlot(slot);
+    end))
+end
+
+--[[
+    Disables every slot in the active hotbar
+]]
+---@inline
+function HotbarService._DisableCurrentHotbar(self: HotbarService, direction: HotbarScrollDirection.HotbarScrollDirectionValues): ()
+    local frame = hotbarSlots[activeHotbar][1].Parent :: Frame;
+
+    for _, event in ipairs(hotbarConnectedEvents) do
+        event:Disconnect();
+    end
+    table.clear(hotbarConnectedEvents);
+
+    local tween = TweenService:Create(
+        frame,
+        CHANGE_HOTBAR_TWEEN_INFORMATION,
+        {
+            Position = UDim2.fromScale(0, direction + math.sign(direction) * SPACE_BETWEEN_HOTBARS)
+        }
+    );
+    tween:Play();
+    tween.Completed:Connect(function()
+        tween:Destroy();
     end)
 end
 
@@ -460,8 +544,98 @@ function HotbarService._ConnectEventToSetATool(self: HotbarService): ()
         hotbarTools[data.toolType][slotFrame] = tool;
 
         slotFrame.ToolName.Text = tool:GetName();
-        slotFrame.ImageLabel.Image = `rbxassetid://{tool:GetImageId()}`;
+        slotFrame.ImageLabel.Image = string.format(ROBLOX_IMAGE_STRING, tool:GetImageId());
     end)
+end
+
+--[[
+    Connects the event to swap tools from hotbar
+]]
+function HotbarService._EnableSwapingToolsInHotbar(self: HotbarService, slot: HotbarServiceTypes.HotbarSlot): ()
+    if hotbarTools[activeHotbar][slot] then
+        hotbarTools[activeHotbar][slot]:Unequip();
+    end
+
+    local toolName = slot.ToolName.Text;
+    
+    local newImage = slot.ImageLabel:Clone();
+    newImage.Parent = hotbarUi;
+    newImage.Position = UDim2.fromOffset(slot.ImageLabel.AbsolutePosition.X, slot.ImageLabel.AbsolutePosition.Y);
+    newImage.Size = UDim2.fromOffset(slot.ImageLabel.AbsoluteSize.X, slot.ImageLabel.AbsoluteSize.Y);
+    newImage.ZIndex = 9999;
+
+    buttonOverall.Visible = true;
+    slot.ToolName.Text = "";
+    slot.ImageLabel.Image = "";
+
+    local mouseMoveEvent = mouse.Move:Connect(function()
+        newImage.Position = UDim2.fromOffset(mouse.X, mouse.Y);
+    end)
+
+    overallButtonEvent = buttonOverall.MouseButton1Up:Connect(function()
+        if overallButtonEvent then
+            overallButtonEvent:Disconnect();
+            overallButtonEvent = nil;
+        end
+        mouseMoveEvent:Disconnect();
+
+        local imageVectorPosition = vector.create(newImage.AbsolutePosition.X, newImage.AbsolutePosition.Y);
+        local slotToPlace = (self:_GetClosestSlot(imageVectorPosition) or slot) :: HotbarServiceTypes.HotbarSlot;
+        
+        local tween = TweenService:Create(
+            newImage,
+            MOVE_IMAGE_TO_SLOOT_TWEEN_INFORMATION,
+            {
+                Size = UDim2.fromOffset(slot.AbsoluteSize.X, slot.AbsoluteSize.Y);
+                Position = UDim2.fromOffset(
+                    slotToPlace.AbsolutePosition.X + slotToPlace.AbsoluteSize.X * 0.5,
+                    slotToPlace.AbsolutePosition.Y + slotToPlace.AbsoluteSize.Y * 0.5
+                );
+            }
+        );
+
+        tween:Play();
+        tween.Completed:Wait();
+        tween:Destroy();
+
+        slotToPlace.ImageLabel.Image = newImage.Image;
+        slotToPlace.ToolName.Text = toolName;
+
+        newImage:Destroy();
+
+        buttonOverall.Visible = false;
+
+        if slotToPlace:GetFullName() ~= slot:GetFullName() then
+            local newSlotData = hotbarTools[activeHotbar][slotToPlace];
+            hotbarTools[activeHotbar][slotToPlace] = hotbarTools[activeHotbar][slot];
+            hotbarTools[activeHotbar][slot] = newSlotData;
+
+            slot.ImageLabel.Image = newSlotData and string.format(ROBLOX_IMAGE_STRING, newSlotData:GetImageId()) or "";
+            slot.ToolName.Text = newSlotData and newSlotData:GetName() or "";
+        end
+    end)
+end
+
+--[[
+    Obtains the closest slot from the active hotbar to the given position
+    @param position Position to get the distance from
+    @return The closest slot to the given position. Nil if it was not found
+]]
+function HotbarService._GetClosestSlot(self: HotbarService, position: vector): HotbarServiceTypes.HotbarSlot?
+    local slotToPlace: HotbarServiceTypes.HotbarSlot? = nil
+    local slotDistance: number = math.huge;
+
+    for _, slot in ipairs(hotbarSlots[activeHotbar]) do
+        local slotPosition = vector.create(slot.AbsolutePosition.X, slot.AbsolutePosition.Y);
+        local distance = vector.magnitude(slotPosition - position);
+
+        if slotDistance > distance and distance <= MAXIMUM_DISTANCE_TO_DETECT_SLOTS_WHEN_SWAPING then
+            slotDistance = distance;
+            slotToPlace = slot;
+        end
+    end
+
+    return slotToPlace;
 end
 
 --[[

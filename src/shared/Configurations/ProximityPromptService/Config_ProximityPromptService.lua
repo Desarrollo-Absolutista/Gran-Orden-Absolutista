@@ -19,26 +19,26 @@ local Config: Config = {
 
 	defaultOnFocusMethod = function(instance: Instance?)
 		if instance == nil then
-			return
+			return;
 		end
 
 		if not instance:IsA("BasePart") then
-			return
+			return;
 		end
 
-		(instance :: BasePart).BrickColor = BrickColor.Green()
+		(instance :: BasePart).BrickColor = BrickColor.Green();
 	end,
 
 	defaultOnUnfocusMethod = function(instance: Instance?)
 		if instance == nil then
-			return
+			return;
 		end
 
 		if not instance:IsA("BasePart") then
-			return
+			return;
 		end
 
-		(instance :: BasePart).BrickColor = BrickColor.Red()
+		(instance :: BasePart).BrickColor = BrickColor.Red();
 	end,
 };
 
