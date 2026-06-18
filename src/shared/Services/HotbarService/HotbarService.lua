@@ -7,9 +7,9 @@
 -- Constants
 -------------------------------------
 
-local ROBLOX_IMAGE_STRING = "rbxassetid://%i";
+local ROBLOX_IMAGE_STRING: string = "rbxassetid://%i";
 
-local SLOT_NAME = "Slot#%i";
+local SLOT_NAME: string = "Slot#%i";
 
 local COOLDOWN_TO_CHANGE_HOTBAR: number = 0.1;
 local CHANGE_HOTBAR_ACTION_NAME: string = "HotbarScroll";
@@ -17,8 +17,8 @@ local CHANGE_HOTBAR_ACTION_NAME: string = "HotbarScroll";
 local SPACE_BETWEEN_HOTBARS: number = 0.5;
 local CHANGE_HOTBAR_TWEEN_INFORMATION: TweenInfo = TweenInfo.new(0.25);
 
-local DISTANCE_TO_MOVE_OFF_TO_START_MOVING_SLOTS = 20;
-local MAXIMUM_DISTANCE_TO_DETECT_SLOTS_WHEN_SWAPING = 100;
+local DISTANCE_TO_MOVE_OFF_TO_START_MOVING_SLOTS: number = 20;
+local MAXIMUM_DISTANCE_TO_DETECT_SLOTS_WHEN_SWAPING: number = 100;
 local MOVE_IMAGE_TO_SLOOT_TWEEN_INFORMATION: TweenInfo = TweenInfo.new(0.25);
 
 -------------------------------------
@@ -232,7 +232,8 @@ function HotbarService._EnableCurrentHotbar(self: HotbarService, direction: Hotb
 end
 
 --[[
-
+    Enables the events for the specific slot
+    @param slot Slot whose evets will be connected
 ]]
 function HotbarService._EnableSlotEvents(self: HotbarService, slot: HotbarServiceTypes.HotbarSlot): ()
     local pressingButtonPromise: typeof(Promise.new())? = nil;
@@ -248,7 +249,6 @@ function HotbarService._EnableSlotEvents(self: HotbarService, slot: HotbarServic
             resolve();
         end)
         :andThen(function()
-            print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
             self:_EnableSwapingToolsInHotbar(slot);
         end)
     end))
