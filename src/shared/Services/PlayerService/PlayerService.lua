@@ -7,9 +7,6 @@
 -- Constants
 -------------------------------------
 
-local SHIFTLOCK_CAMERA_OFFSET: Vector3 = Vector3.xAxis * 2
-local RENDER_STEP_NAME: string = "ShiftLock";
-
 -------------------------------------
 -- Roblox Services
 -------------------------------------
@@ -17,9 +14,9 @@ local RENDER_STEP_NAME: string = "ShiftLock";
 local UserInputService = game:GetService("UserInputService");
 local RunService = game:GetService("RunService");
 local GuiService = game:GetService("GuiService");
+local Players = game:GetService("Players")
 local VRService = game:GetService("VRService");
-local Players = game:GetService("Players");
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage");
 
 -------------------------------------
 -- Dependencies
@@ -30,6 +27,7 @@ local packets = ReplicatedStorage.Packets;
 local PlayerPacket = require(packets.Player.PlayerPacket);
 
 local DeviceType = require("./DeviceType");
+local PlayerTypes = require("./PlayerTypes");
 
 -------------------------------------
 -- Variables
@@ -37,6 +35,8 @@ local DeviceType = require("./DeviceType");
 
 local PlayerService = {};
 local isServiceInitialized: boolean = false;
+
+local player = Players.LocalPlayer :: Player;
 
 -------------------------------------
 -- Methods
@@ -66,6 +66,7 @@ end
 --[[
     Returns the player device type
     @return Player's device type
+	@error This method can only be ran on client-side!
 ]]
 function PlayerService.GetPlayerDevice(self: PlayerService): DeviceType.DeviceTypeValues
 	assert(RunService:IsClient(), "This method can only be ran on client-side!");
@@ -92,68 +93,19 @@ function PlayerService.GetPlayerDevice(self: PlayerService): DeviceType.DeviceTy
 end
 
 --[[
-	Calculates the looking angle
-	@return The looking angle
+	Checks if the local player is in first person view
+	@return True if the local player is in first person view, false otherwise
+	@error This method can only be ran on client-side!
 ]]
-function PlayerService._GetLookingAngle(self: PlayerService): number
-	local camera = workspace.CurrentCamera;
-	if camera == nil then
-		return 0;
+function PlayerService.IsPlayerInFirstPerson(self: PlayerService): boolean
+	assert(RunService:IsClient(), "This method can only be ran on client-side!");
+
+	local character = player.Character :: PlayerTypes.CharacterR15;
+	if character == nil then
+		return false;
 	end
 
-	local lookingTowards = camera.CFrame.LookVector;
-
-	return math.atan2(-lookingTowards.X, -lookingTowards.Z);
-end
-
---[[
-	Activates the "forced" shift lock
-	@param humanoid: Player's humanoid affected
-]]
-function PlayerService.EnableShiftLock(self: PlayerService): ()
-	assert(RunService:IsClient(), "This method can only be ran on client-side!")
-
-	local player = Players.LocalPlayer :: Player;
-	
-	RunService:BindToRenderStep(RENDER_STEP_NAME, Enum.RenderPriority.Character.Value, function()
-		local character = player.Character;
-		if character == nil then
-			return;
-		end
-
-		local humanoid = character:WaitForChild("Humanoid") :: Humanoid;
-
-		local rootPart : Part = humanoid.RootPart :: Part
-		
-		humanoid.CameraOffset = SHIFTLOCK_CAMERA_OFFSET
-		humanoid.AutoRotate = false
-		
-		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
-
-		local cframePosition = CFrame.new(rootPart.Position);
-		local cframeRotation = CFrame.fromAxisAngle(Vector3.yAxis, self:_GetLookingAngle());
-		
-		rootPart.CFrame = cframePosition * cframeRotation;
-	end)
-end
-
---[[
-	Desactivates the "forced" shift lock
-	@param humanoid: Player"s humanoid affected
-]]
-function PlayerService.DisableShiftLock(self: PlayerService)
-    assert(RunService:IsClient(), "This method can only be ran on client-side!");
-
-	local player = Players.LocalPlayer :: Player;
-	local character = player.Character or player.CharacterAdded:Wait();
-	local humanoid = character:WaitForChild("Humanoid") :: Humanoid;
-
-	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-	
-	humanoid.CameraOffset = Vector3.zero
-	humanoid.AutoRotate = true
-	
-	RunService:UnbindFromRenderStep(RENDER_STEP_NAME)
+	return character.Head.LocalTransparencyModifier == 1;
 end
 
 --[[
