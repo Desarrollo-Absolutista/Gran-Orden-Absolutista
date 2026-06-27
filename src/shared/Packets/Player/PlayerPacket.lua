@@ -33,6 +33,14 @@ return ByteNetMax.defineNamespace("Player", function()
 				{
 				},
 			},
+
+			ActivateRobloxShiftLock = ByteNetMax.definePacket
+			{
+				value = ByteNetMax.struct
+				{
+					enable = ByteNetMax.bool
+				}
+			}
 		},
         
 		queries = {},

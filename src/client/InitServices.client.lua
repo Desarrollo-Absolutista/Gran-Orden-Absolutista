@@ -11,5 +11,6 @@ require(ReplicatedStorage.Services.ChatService.ChatService):init();
 require(ReplicatedStorage.Services.HotbarService.HotbarService):init();
 require(ReplicatedStorage.Services.ToolService.ToolService):init();
 require(ReplicatedStorage.Services.PlayerService.PlayerService):init();
+require(ReplicatedStorage.Services.ShiftLockService.ShiftLockService):init();
 
 print("Services initializated");

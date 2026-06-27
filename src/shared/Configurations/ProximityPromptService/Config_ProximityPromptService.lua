@@ -46,7 +46,7 @@ local Config: Config = {
 -- Types
 -------------------------------------
 
-export type Config = { [string]: any };
+export type Config = {[string]: any};
 
 -------------------------------------
 -- Return

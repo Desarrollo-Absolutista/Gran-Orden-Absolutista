@@ -14,6 +14,7 @@ local RENDER_STEP_NAME: string = "ShiftLock";
 -- Roblox Services
 -------------------------------------
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage");
 local UserInputService = game:GetService("UserInputService");
 local RunService = game:GetService("RunService");
 local Players = game:GetService("Players");
@@ -21,6 +22,13 @@ local Players = game:GetService("Players");
 -------------------------------------
 -- Dependencies
 -------------------------------------
+
+local packets = ReplicatedStorage.Packets;
+local configurations = ReplicatedStorage.Configurations;
+
+local PlayerPacket = require(packets.Player.PlayerPacket);
+
+local Config = require(configurations.ShiftLockService.Config_ShiftLockService);
 
 -------------------------------------
 -- Variables
@@ -43,6 +51,20 @@ function ShiftLockService.init(self: ShiftLockService): ()
     end
     
     isServiceInitialized = true;
+
+	self:_SetRobloxShiftLock();
+end
+
+--[[
+	Enables/disables roblox's shift lock according to the set configuration
+]]
+function ShiftLockService._SetRobloxShiftLock(self: ShiftLockService): ()
+	if not Config.EnableRobloxShiftLock then
+		PlayerPacket.packets.ActivateRobloxShiftLock.send
+		{
+			enable = false
+		};
+	end
 end
 
 --[[
@@ -63,9 +85,17 @@ end
 --[[
 	Activates the "forced" shift lock
 	@param humanoid: Player's humanoid affected
+	@error This method can only be ran on client-side!"
 ]]
 function ShiftLockService.EnableShiftLock(self: ShiftLockService): ()
-	assert(RunService:IsClient(), "This method can only be ran on client-side!")
+	assert(RunService:IsClient(), "This method can only be ran on client-side!");
+
+	if not Config.EnableRobloxShiftLock then
+		PlayerPacket.packets.ActivateRobloxShiftLock.send
+		{
+			enable = false
+		};
+	end
 
 	local player = Players.LocalPlayer :: Player;
 	
@@ -77,10 +107,10 @@ function ShiftLockService.EnableShiftLock(self: ShiftLockService): ()
 
 		local humanoid = character:WaitForChild("Humanoid") :: Humanoid;
 
-		local rootPart : Part = humanoid.RootPart :: Part
+		local rootPart = humanoid.RootPart :: Part;
 		
-		humanoid.CameraOffset = SHIFTLOCK_CAMERA_OFFSET
-		humanoid.AutoRotate = false
+		humanoid.CameraOffset = SHIFTLOCK_CAMERA_OFFSET;
+		humanoid.AutoRotate = false;
 		
 		UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
 
@@ -94,20 +124,29 @@ end
 --[[
 	Desactivates the "forced" shift lock
 	@param humanoid: Player"s humanoid affected
+	@error This method can only be ran on client-side!"
 ]]
 function ShiftLockService.DisableShiftLock(self: ShiftLockService)
     assert(RunService:IsClient(), "This method can only be ran on client-side!");
+
+	if Config.EnableRobloxShiftLock then
+		PlayerPacket.packets.ActivateRobloxShiftLock.send
+		{
+			enable = true
+		};
+	end
+
 
 	local player = Players.LocalPlayer :: Player;
 	local character = player.Character or player.CharacterAdded:Wait();
 	local humanoid = character:WaitForChild("Humanoid") :: Humanoid;
 
-	UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+	UserInputService.MouseBehavior = Enum.MouseBehavior.Default;
 	
-	humanoid.CameraOffset = Vector3.zero
-	humanoid.AutoRotate = true
+	humanoid.CameraOffset = Vector3.zero;
+	humanoid.AutoRotate = true;
 	
-	RunService:UnbindFromRenderStep(RENDER_STEP_NAME)
+	RunService:UnbindFromRenderStep(RENDER_STEP_NAME);
 end
 
 
