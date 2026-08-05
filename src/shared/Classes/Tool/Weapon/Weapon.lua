@@ -55,6 +55,8 @@ function Weapon.new(name: string, imageId: number, mass: number, model: Model | 
 
     self._trove = Trove.new();
 
+    self._toolEvents = {};
+
     self._damage = damage;
 
     return self;
@@ -79,6 +81,8 @@ end
 export type Weapon = Tool.Tool & typeof(setmetatable(
     {} :: {
         _trove: Trove.Trove,
+
+        _toolEvents: {RBXScriptConnection},
 
         _damage: number
     },

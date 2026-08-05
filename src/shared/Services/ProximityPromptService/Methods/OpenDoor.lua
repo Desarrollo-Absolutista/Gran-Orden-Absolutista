@@ -1,6 +1,6 @@
 --!strict
 --@author Kriko_YT
---@date 2026/06/04
+--@date 2026/06/05
 --@version 1.0
 
 -------------------------------------
@@ -12,24 +12,17 @@
 -------------------------------------
 
 -------------------------------------
--- Types
+-- Variables
 -------------------------------------
 
-export type EventMethod = (...any) -> ();
-
-export type KeybindData = {
-	keys: {Enum.KeyCode},
-	methodMessage: string,
-	method: EventMethod
-};
-
-export type KeyPromptUi = Frame & {
-	Key: TextLabel,
-	TextLabel: TextLabel
-};
+-------------------------------------
+-- Methods
+-------------------------------------
 
 -------------------------------------
 -- Return
 -------------------------------------
 
-return nil;
+return function(instance: Instance?, proximityPrompt): ()
+    print("Opening door")
+end

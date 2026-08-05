@@ -52,7 +52,7 @@ ObjectPooling.__index = ObjectPooling;
     ```
     ---
     
-    @param instance Instance to be pooling and unpooling
+    @param instance Instance to be pooled and unpooled
     @param defaultPoolAmount The default amount of instances ready to be pool
     @param onPoolMethod Method to run when a new instance was pooled. Receives the proper instance as argument
     @param onUnpoolMethod Method to run when a new instance was unpooled. Receives the proper instance as argument

@@ -8,7 +8,7 @@
 -------------------------------------
 
 local Config_ShiftLockService: Config_ShiftLockService = {
-    EnableRobloxShiftLock = false;
+    EnableRobloxShiftLock = true;
 };
 
 -------------------------------------

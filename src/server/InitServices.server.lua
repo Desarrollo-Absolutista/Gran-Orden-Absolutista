@@ -1,4 +1,12 @@
+-------------------------------------
+-- Roblox Services
+-------------------------------------
+
 local ServerStorage = game:GetService("ServerStorage");
+
+-------------------------------------
+-- Behaviour
+-------------------------------------
 
 require(ServerStorage.Services.ChatService.ChatService):init();
 require(ServerStorage.Services.HotbarService.HotbarService):init();

@@ -75,7 +75,7 @@ function Tool.new(name: string, imageId: number, mass: number, model: Model | Ba
 	self._actionCooldown = actionCooldown;
 	self._canDoCooldownAction = true;
 
-	self.equipped = self._trove:Add(Signal.new());
+	self.Equipped = self._trove:Add(Signal.new());
 	self.Unequipped = self._trove:Add(Signal.new());
 
 	self._model = model;
@@ -90,7 +90,7 @@ end
 --[[
 	Equips the tool
 ]]
-function Tool.Equip(self: Tool): ()
+function Tool._EquipGeneralMethod(self: Tool): ()
 	if equippedTool then
 		equippedTool:Unequip()
 	end
@@ -102,7 +102,7 @@ function Tool.Equip(self: Tool): ()
 		toolType = self._type
 	}
 
-	self.equipped:Fire();
+	self.Equipped:Fire();
 	self._isEquipped = true;
 
 	if self._equipMethod then
@@ -111,9 +111,16 @@ function Tool.Equip(self: Tool): ()
 end
 
 --[[
+	Equips the tool
+]]
+function Tool.Equip(self: Tool): ()
+	self:_EquipGeneralMethod();
+end
+
+--[[
 	Unequips the tool
 ]]
-function Tool.Unequip(self: Tool): ()
+function Tool._UnequipGeneralMethod(self: Tool): ()
 	self.Unequipped:Fire();
 	
 	ToolsPacket.packets.Unequip.send();
@@ -122,6 +129,13 @@ function Tool.Unequip(self: Tool): ()
 	if self._unequipMethod then
 		self._unequipMethod();
 	end
+end
+
+--[[
+	Unequips the tool
+]]
+function Tool.Unequip(self: Tool): ()
+	self:_UnequipGeneralMethod();
 end
 
 --[[
@@ -195,7 +209,7 @@ export type Tool = typeof(setmetatable(
 		_actionCooldown: number,
 		_canDoCooldownAction: boolean,
 
-		equipped: Signal.Signal,
+		Equipped: Signal.Signal,
 		Unequipped: Signal.Signal,
 
 		_model: Model | BasePart,

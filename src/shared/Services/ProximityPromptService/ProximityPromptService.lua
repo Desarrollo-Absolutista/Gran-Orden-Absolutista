@@ -3,6 +3,14 @@
 --@date 2026/06/04
 --@version 1.0
 
+--[[
+	To create a proximity prompt, there must be in workspace a part with the tag "ProximityPrompt". This part can have the following attributes:
+	· MaxSize: Maximum distance to check the proximity prompt
+	· Method[1-4]: Method to run when the key is triggered. This will be looked for in the folder Method
+	· Methos[1-4]Message: Text that will be rendered after the key on the UI for the action
+	· Static: When the part associated with the proximity prompt moves or its attributes changes and this property is enabled, the proximity prompt will update according to it
+]]
+
 -------------------------------------
 -- Constants
 -------------------------------------
@@ -12,7 +20,7 @@ local PROXIMITY_PROMPT_ATTRIBUTE: string = "ProximityPrompt";
 local MAXIMUM_RADIUS_PROXIMITY_PROMPT_ATTRIBUTE_NAME: string = "MaxDistance";
 local METHOD_NAME_ATTRIBUTE_NAME: string = "Method%i";
 local METHOD_MESSAGE_ATTRIBUTE_NAME: string = "Method%iMessage";
-local MOVABLE_ATTRIBUTE_NAME: string = "Movable";
+local STATIC_ATTRIBUTE_NAME: string = "Static";
 
 local MAXIMUM_METHODS_PER_PROXIMITY_PROMPT: number = 4;
 
@@ -174,8 +182,9 @@ end
 --[[
     Adds a proximity prompt to the octree
     @param proximityPart The part to create a proximity prompt from
+	@return The new proximity prompt created
 ]]
-function ProximityPromptService.AddProximityPrompt(self: ProximityPromptService, proximityPart: BasePart): ()
+function ProximityPromptService.AddProximityPrompt(self: ProximityPromptService, proximityPart: BasePart): ProximityPrompt.ProximityPrompt
 	local objectValue = proximityPart:FindFirstChildWhichIsA("ObjectValue");
 	local affectedInstance: Instance? = nil;
 
@@ -194,12 +203,38 @@ function ProximityPromptService.AddProximityPrompt(self: ProximityPromptService,
 
 	proximityPromptsOctree:CreateNode(proximityPart.Position, proximityPrompt);
 
-	if proximityPart:GetAttribute(MOVABLE_ATTRIBUTE_NAME) == true then
-		proximityPromptsEvent[proximityPart] = proximityPart:GetPropertyChangedSignal("Position"):Connect(function()
+	if proximityPart:GetAttribute(STATIC_ATTRIBUTE_NAME) == false then
+		proximityPromptsEvent[proximityPart] = {};
+		
+		table.insert(proximityPromptsEvent[proximityPart], proximityPart:GetPropertyChangedSignal("Position"):Connect(function()
 			proximityPrompt:SetPosition(proximityPart.Position);
 			self:_UpdateProximityPrompts();
-		end);
+		end));
+
+		table.insert(proximityPromptsEvent[proximityPart], proximityPart:GetAttributeChangedSignal(MAXIMUM_RADIUS_PROXIMITY_PROMPT_ATTRIBUTE_NAME):Connect(function()
+			proximityPrompt:SetMaxDistance(proximityPart:GetAttribute(MAXIMUM_RADIUS_PROXIMITY_PROMPT_ATTRIBUTE_NAME) :: number or 0);
+		end))
+
+		for i: number = 1, MAXIMUM_METHODS_PER_PROXIMITY_PROMPT do
+			local methodAttribute = string.format(METHOD_NAME_ATTRIBUTE_NAME, i);
+			local messageAttribute = string.format(METHOD_MESSAGE_ATTRIBUTE_NAME, i);
+			
+			table.insert(proximityPromptsEvent[proximityPart], proximityPart:GetAttributeChangedSignal(methodAttribute):Connect(function()
+				local methodModule = proximityPromptMethodsFolder:FindFirstChild(proximityPart:GetAttribute(methodAttribute)) :: ModuleScript?;
+				if methodModule == nil then
+					return;
+				end
+
+				proximityPrompt:SetKeysMethod(Config.keys[i], require(methodModule) :: ProximityPromptTypes.EventMethod);
+			end))
+
+			table.insert(proximityPromptsEvent[proximityPart], proximityPart:GetAttributeChangedSignal(messageAttribute):Connect(function()
+				proximityPrompt:SetKeysMessage(Config.keys[i], proximityPart:GetAttribute(messageAttribute) :: string);
+			end))
+		end
 	end
+
+	return proximityPrompt;
 end
 
 --[[
@@ -248,13 +283,13 @@ function ProximityPromptService._PickNearestProximityPrompt(self: ProximityPromp
 		if isProximityPartBehind then
 			continue;
 		end
-
+		
 		local distanceToCamera = (candidatePromptInstance:GetPosition() - playerCamera.CFrame.Position).Magnitude;
-
+		
 		if distanceToCamera > candidatePromptInstance:GetMaxDistance() then
 			continue;
 		end
-
+		
 		if self:_IsThereAnythingBetweenPlayerAndProximityPrompt(candidatePromptInstance) then
 			continue;
 		end
